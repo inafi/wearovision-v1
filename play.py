@@ -1,159 +1,130 @@
-import cv2 as cv
-import argparse
-import sys
+import cv2
 import numpy as np
-import os.path
 
-# Initialize the parameters
-confThreshold = 0.5  #Confidence threshold
-nmsThreshold = 0.4   #Non-maximum suppression threshold
-inpWidth = 416       #Width of network's input image
-inpHeight = 416      #Height of network's input image
+# 'path to input image/video'
+IMAGE='/Users/nafi/Develop/ML/OpenCV/stuff3.jpg'
 
-parser = argparse.ArgumentParser(description='Object Detection using YOLO in OPENCV')
-parser.add_argument('--image', help='/Users/nafi/Develop/ML/OpenCV/stuff3.jpg')
-parser.add_argument('--video', help='Path to video file.')
-args = parser.parse_args()
-        
-# Load names of classes
-classesFile = "/Users/nafi/Develop/darknet/cfg/coco.data"
+# 'path to yolo config file' 
+# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.cfg
+CONFIG='/Users/nafi/Develop/ML/OpenCV/yolov3.cfg'
+
+# 'path to text file containing class names'
+# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.txt
+CLASSES='/Users/nafi/Develop/ML/OpenCV/yolov3.txt'
+
+# 'path to yolo pre-trained weights' 
+# wget https://pjreddie.com/media/files/yolov3.weights
+WEIGHTS='/Users/nafi/Develop/ML/OpenCV/yolov3.weights'
+
+import os  
+
+# read class names from text file
 classes = None
-with open(classesFile, 'rt') as f:
-    classes = f.read().rstrip('\n').split('\n')
-
-# Give the configuration and weight files for the model and load the network using them.
-modelConfiguration = "/Users/nafi/Develop/darknet/cfg/yolov3.cfg"
-modelWeights = "/Users/nafi/Develop/darknet/yolov3.weights"
-
-net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
-net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
-net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
-
-# Get the names of the output layers
-def getOutputsNames(net):
-    # Get the names of all the layers in the network
-    layersNames = net.getLayerNames()
-    # Get the names of the output layers, i.e. the layers with unconnected outputs
-    return [layersNames[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-
-# Draw the predicted bounding box
-def drawPred(classId, conf, left, top, right, bottom):
-    # Draw a bounding box.
-    cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 3)
-    
-    label = '%.2f' % conf
+with open(CLASSES, 'r') as f:
+     classes = [line.strip() for line in f.readlines()]
         
-    # Get the label for the class name and its confidence
-    if classes:
-        assert(classId < len(classes))
-        label = '%s:%s' % (classes[classId], label)
+scale = 0.00392
+conf_threshold = 0.5
+nms_threshold = 0.4
 
-    #Display the label at the top of the bounding box
-    labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-    top = max(top, labelSize[1])
-    cv.rectangle(frame, (left, top - round(1.5*labelSize[1])), (left + round(1.5*labelSize[0]), top + baseLine), (255, 255, 255), cv.FILLED)
-    cv.putText(frame, label, (left, top), cv.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,0), 1)
+# generate different colors for different classes 
+COLORS = np.random.uniform(0, 255, size=(len(classes), 3))
 
-# Remove the bounding boxes with low confidence using non-maxima suppression
-def postprocess(frame, outs):
-    frameHeight = frame.shape[0]
-    frameWidth = frame.shape[1]
+# function to get the output layer names 
+# in the architecture
+def get_output_layers(net): 
+    layer_names = net.getLayerNames()
+    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+    return output_layers
 
-    # Scan through all the bounding boxes output from the network and keep only the
-    # ones with high confidence scores. Assign the box's class label as the class with the highest score.
-    classIds = []
+# function to draw bounding box on the detected object with class name
+def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
+    label = str(classes[class_id])
+    color = COLORS[class_id]
+    cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 2)
+    cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+def processImage(image,index):
+
+    Width = image.shape[1]
+    Height = image.shape[0]
+
+    # read pre-trained model and config file
+    net = cv2.dnn.readNet(WEIGHTS, CONFIG)
+
+    # create input blob 
+    blob = cv2.dnn.blobFromImage(image, scale, (416,416), (0,0,0), True, crop=False)
+    # set input blob for the network
+    net.setInput(blob)
+
+    # run inference through the network
+    # and gather predictions from output layers
+    outs = net.forward(get_output_layers(net))
+
+    # initialization
+    class_ids = []
     confidences = []
     boxes = []
+    # for each detetion from each output layer 
+    # get the confidence, class id, bounding box params
+    # and ignore weak detections (confidence < 0.5)
     for out in outs:
         for detection in out:
             scores = detection[5:]
-            classId = np.argmax(scores)
-            confidence = scores[classId]
-            if confidence > confThreshold:
-                center_x = int(detection[0] * frameWidth)
-                center_y = int(detection[1] * frameHeight)
-                width = int(detection[2] * frameWidth)
-                height = int(detection[3] * frameHeight)
-                left = int(center_x - width / 2)
-                top = int(center_y - height / 2)
-                classIds.append(classId)
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
+            if confidence > 0.5:
+                center_x = int(detection[0] * Width)
+                center_y = int(detection[1] * Height)
+                w = int(detection[2] * Width)
+                h = int(detection[3] * Height)
+                x = center_x - w / 2
+                y = center_y - h / 2
+                class_ids.append(class_id)
                 confidences.append(float(confidence))
-                boxes.append([left, top, width, height])
+                boxes.append([x, y, w, h])
+            
+    # apply non-max suppression
+    indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
 
-    # Perform non maximum suppression to eliminate redundant overlapping boxes with
-    # lower confidences.
-    indices = cv.dnn.NMSBoxes(boxes, confidences, confThreshold, nmsThreshold)
+    # go through the detections remaining
+    # after nms and draw bounding box
     for i in indices:
         i = i[0]
         box = boxes[i]
-        left = box[0]
-        top = box[1]
-        width = box[2]
-        height = box[3]
-        drawPred(classIds[i], confidences[i], left, top, left + width, top + height)
-
-# Process inputs
-winName = 'Deep learning object detection in OpenCV'
-cv.namedWindow(winName, cv.WINDOW_NORMAL)
-
-outputFile = "yolo_out_py.avi"
-if (args.image):
-    # Open the image file
-    if not os.path.isfile(args.image):
-        print("Input image file ", args.image, " doesn't exist")
-        sys.exit(1)
-    cap = cv.VideoCapture(args.image)
-    outputFile = args.image[:-4]+'_yolo_out_py.jpg'
-elif (args.video):
-    # Open the video file
-    if not os.path.isfile(args.video):
-        print("Input video file ", args.video, " doesn't exist")
-        sys.exit(1)
-    cap = cv.VideoCapture(args.video)
-    outputFile = args.video[:-4]+'_yolo_out_py.avi'
-else:
-    # Webcam input
-    cap = cv.VideoCapture(0)
-
-# Get the video writer initialized to save the output video
-if (not args.image):
-    vid_writer = cv.VideoWriter(outputFile, cv.VideoWriter_fourcc('M','J','P','G'), 30, (round(cap.get(cv.CAP_PROP_FRAME_WIDTH)),round(cap.get(cv.CAP_PROP_FRAME_HEIGHT))))
-
-while cv.waitKey(1) < 0:
+        x = box[0]
+        y = box[1]
+        w = box[2]
+        h = box[3]
     
-    # get frame from the video
-    hasFrame, frame = cap.read()
+        draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
     
-    # Stop the program if reached end of video
-    if not hasFrame:
-        print("Done processing !!!")
-        print("Output file is stored as ", outputFile)
-        cv.waitKey(3000)
-        # Release device
-        cap.release()
-        break
+    # display output image    
+    out_image_name = "object detection"+str(index)
+    #cv2.imshow(out_image_name, image)
+    # wait until any key is pressed
+    #cv2.waitKey()
+     # save output image to disk
+    cv2.imwrite(out_image_name+".jpg", image)
 
-    # Create a 4D blob from a frame.
-    blob = cv.dnn.blobFromImage(frame, 1/255, (inpWidth, inpHeight), [0,0,0], 1, crop=False)
+# open the video file
+cap = cv2.VideoCapture(IMAGE)
 
-    # Sets the input to the network
-    net.setInput(blob)
+index = 0
+while(cap.isOpened()):
+    ret, frame = cap.read()
+    processImage(frame,index)
+    index = index +1
+    
+# release resources
+cv2.destroyAllWindows()
 
-    # Runs the forward pass to get output of the output layers
-    outs = net.forward(getOutputsNames(net))
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/stuff3.jpg')
+plt.imshow(img)
 
-    # Remove the bounding boxes with low confidence
-    postprocess(frame, outs)
-
-    # Put efficiency information. The function getPerfProfile returns the overall time for inference(t) and the timings for each of the layers(in layersTimes)
-    t, _ = net.getPerfProfile()
-    label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
-    cv.putText(frame, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-
-    # Write the frame with the detection boxes
-    if (args.image):
-        cv.imwrite(outputFile, frame.astype(np.uint8))
-    else:
-        vid_writer.write(frame.astype(np.uint8))
-
-    cv.imshow(winName, frame)
+plt.imshow(img)
+plt.xlim(600, 1100)
+plt.ylim(1000,700)
+plt.show()
