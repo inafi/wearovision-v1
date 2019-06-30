@@ -41,8 +41,8 @@ def get_output_layers(net):
 def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
     label = str(classes[class_id])
     color = COLORS[class_id]
-    cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 2)
-    cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 7)
+    cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 2.5, color, 2)
 
 def processImage(image,index):
 
@@ -100,7 +100,7 @@ def processImage(image,index):
         draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
     
     # display output image    
-    out_image_name = "object detection"+str(index)
+    out_image_name = "yolo-output"+str(index)
     #cv2.imshow(out_image_name, image)
     # wait until any key is pressed
     #cv2.waitKey()
@@ -111,20 +111,23 @@ def processImage(image,index):
 cap = cv2.VideoCapture(IMAGE)
 
 index = 0
-'''while(cap.isOpened()):
-    ret, frame = cap.read()
-    processImage(frame,index)
-    index = index +1'''
+try:
+	while(cap.isOpened()):
+		ret, frame = cap.read()
+		processImage(frame,index)
+		index = index +1
+except:
+	print()
     
 # release resources
 cv2.destroyAllWindows()
-
+'''
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/stuff3.jpg')
+img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/objects.jpg')
 plt.imshow(img)
 
 plt.imshow(img)
-plt.xlim(4000, 0)
-plt.ylim(0,3000)
-plt.show()
+plt.xlim(600, 1100)
+plt.ylim(1000,700)
+plt.show()'''
