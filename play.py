@@ -21,11 +21,16 @@ import os
 # read class names from text file
 classes = None
 with open(CLASSES, 'r') as f:
-     classes = [line.strip() for line in f.readlines()]
-        
+    classes = [line.strip() for line in f.readlines()]      
+
 scale = 0.00392
 conf_threshold = 0.5
 nms_threshold = 0.4
+
+#Print out labels
+def print_labels(labels):
+    for i in range(len(labels)):
+        print(classes[labels[i]])
 
 # generate different colors for different classes 
 COLORS = np.random.uniform(0, 255, size=(len(classes), 3))
@@ -96,16 +101,16 @@ def processImage(image,index):
         y = box[1]
         w = box[2]
         h = box[3]
-    
         draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
     
     # display output image    
-    out_image_name = "yolo-output"+str(index)
+    out_image_name = "yolo-output"\
     #cv2.imshow(out_image_name, image)
     # wait until any key is pressed
     #cv2.waitKey()
-     # save output image to disk
+    # save output image to disk
     cv2.imwrite(out_image_name+".jpg", image)
+    print_labels(class_ids)
 
 # open the video file
 cap = cv2.VideoCapture(IMAGE)
