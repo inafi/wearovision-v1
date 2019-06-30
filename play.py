@@ -111,10 +111,10 @@ def processImage(image,index):
 cap = cv2.VideoCapture(IMAGE)
 
 index = 0
-while(cap.isOpened()):
+'''while(cap.isOpened()):
     ret, frame = cap.read()
     processImage(frame,index)
-    index = index +1
+    index = index +1'''
     
 # release resources
 cv2.destroyAllWindows()
@@ -125,6 +125,6 @@ img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/stuff3.jpg')
 plt.imshow(img)
 
 plt.imshow(img)
-plt.xlim(600, 1100)
-plt.ylim(1000,700)
+plt.xlim(4000, 0)
+plt.ylim(0,3000)
 plt.show()
