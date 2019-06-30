@@ -26,6 +26,8 @@ with open(CLASSES, 'r') as f:
 scale = 0.00392
 conf_threshold = 0.5
 nms_threshold = 0.4
+Width = 0
+Height = 0
 
 #Print out labels
 def print_labels(labels):
@@ -70,7 +72,7 @@ def processImage(image,index):
     class_ids = []
     confidences = []
     boxes = []
-    # for each detetion from each output layer 
+    # for each detection from each output layer 
     # get the confidence, class id, bounding box params
     # and ignore weak detections (confidence < 0.5)
     for out in outs:
@@ -104,7 +106,7 @@ def processImage(image,index):
         draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
     
     # display output image    
-    out_image_name = "yolo-output"\
+    out_image_name = "yolo-output"
     #cv2.imshow(out_image_name, image)
     # wait until any key is pressed
     #cv2.waitKey()
@@ -124,15 +126,20 @@ try:
 except:
 	print()
     
-# release resources
+# release resourcesfrom PIL import Image
+from PIL import Image
+
+im = Image.open('/Users/nafi/Develop/ML/yolo-output.jpg')
+width, height = im.size
+
 cv2.destroyAllWindows()
-'''
+
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/objects.jpg')
+img = mpimg.imread('/Users/nafi/Develop/ML/yolo-output.jpg')
 plt.imshow(img)
 
 plt.imshow(img)
-plt.xlim(600, 1100)
-plt.ylim(1000,700)
-plt.show()'''
+plt.xlim(width, 0)
+plt.ylim(height, 0)
+plt.show()
