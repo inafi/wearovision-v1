@@ -1,27 +1,29 @@
 import cv2
 import numpy as np
+import os
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 # 'path to input image/video'
-IMAGE='/Users/nafi/Develop/ML/OpenCV/stuff3.jpg'
+IMAGE = '/Users/nafi/Develop/GitHub/GSF/OpenCV/stuff3.jpg'
 
-# 'path to yolo config file' 
-# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.cfg
-CONFIG='/Users/nafi/Develop/ML/OpenCV/yolov3.cfg'
+# 'path to yolo config file'
+CONFIG = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.cfg'
 
 # 'path to text file containing class names'
-# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.txt
-CLASSES='/Users/nafi/Develop/ML/OpenCV/yolov3.txt'
+CLASSES = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.txt'
 
-# 'path to yolo pre-trained weights' 
-# wget https://pjreddie.com/media/files/yolov3.weights
-WEIGHTS='/Users/nafi/Develop/ML/OpenCV/yolov3.weights'
+# 'path to yolo pre-trained weights'
+WEIGHTS = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.weights'
 
-import os  
+COLORS = '/Users/nafi/Develop/GitHub/GSF/OpenCV/colors.txt'
 
 # read class names from text file
+
 classes = None
 with open(CLASSES, 'r') as f:
-    classes = [line.strip() for line in f.readlines()]      
+    classes = [line.strip() for line in f.readlines()]
 
 scale = 0.00392
 conf_threshold = 0.5
@@ -29,29 +31,46 @@ nms_threshold = 0.4
 Width = 0
 Height = 0
 
-#Print out labels
+randrgb = []
+
+with open('colors.txt', 'r') as fin:
+    for i in range(sum(1 for line in open('colors.txt'))):
+        randrgb.append(fin.readline())
+
+# Print out labels
+
+
 def print_labels(labels):
     for i in range(len(labels)):
         print(classes[labels[i]])
 
-# generate different colors for different classes 
+
+# generate different colors for different classes
 COLORS = np.random.uniform(0, 255, size=(len(classes), 3))
 
-# function to get the output layer names 
+# function to get the output layer names
 # in the architecture
-def get_output_layers(net): 
+
+
+def get_output_layers(net):
     layer_names = net.getLayerNames()
-    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+    output_layers = [layer_names[i[0] - 1]
+                     for i in net.getUnconnectedOutLayers()]
     return output_layers
 
 # function to draw bounding box on the detected object with class name
+
+
 def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
     label = str(classes[class_id])
     color = COLORS[class_id]
-    cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 7)
-    cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 2.5, color, 2)
+    print(color)
+    cv2.rectangle(img, (x, y), (x_plus_w, y_plus_h), color, 7)
+    cv2.putText(img, label, (x-10, y-10),
+                cv2.FONT_HERSHEY_SIMPLEX, 2.5, color, 2)
 
-def processImage(image,index):
+
+def processImage(image, index):
 
     Width = image.shape[1]
     Height = image.shape[0]
@@ -59,8 +78,9 @@ def processImage(image,index):
     # read pre-trained model and config file
     net = cv2.dnn.readNet(WEIGHTS, CONFIG)
 
-    # create input blob 
-    blob = cv2.dnn.blobFromImage(image, scale, (416,416), (0,0,0), True, crop=False)
+    # create input blob
+    blob = cv2.dnn.blobFromImage(
+        image, scale, (416, 416), (0, 0, 0), True, crop=False)
     # set input blob for the network
     net.setInput(blob)
 
@@ -72,7 +92,7 @@ def processImage(image,index):
     class_ids = []
     confidences = []
     boxes = []
-    # for each detection from each output layer 
+    # for each detection from each output layer
     # get the confidence, class id, bounding box params
     # and ignore weak detections (confidence < 0.5)
     for out in outs:
@@ -90,9 +110,10 @@ def processImage(image,index):
                 class_ids.append(class_id)
                 confidences.append(float(confidence))
                 boxes.append([x, y, w, h])
-            
+
     # apply non-max suppression
-    indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
+    indices = cv2.dnn.NMSBoxes(
+        boxes, confidences, conf_threshold, nms_threshold)
 
     # go through the detections remaining
     # after nms and draw bounding box
@@ -103,43 +124,40 @@ def processImage(image,index):
         y = box[1]
         w = box[2]
         h = box[3]
-        draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
-    
-    # display output image    
-    out_image_name = "yolo-output"
+        draw_bounding_box(image, class_ids[i], confidences[i], round(
+            x), round(y), round(x+w), round(y+h))
+
+    # display output image
+    out_image_name = "output"
     #cv2.imshow(out_image_name, image)
     # wait until any key is pressed
-    #cv2.waitKey()
+    # cv2.waitKey()
     # save output image to disk
     cv2.imwrite(out_image_name+".jpg", image)
     print_labels(class_ids)
+
 
 # open the video file
 cap = cv2.VideoCapture(IMAGE)
 
 index = 0
 try:
-	while(cap.isOpened()):
-		ret, frame = cap.read()
-		processImage(frame,index)
-		index = index +1
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        processImage(frame, index)
+        index = index + 1
 except:
-	print()
-    
-# release resourcesfrom PIL import Image
-from PIL import Image
-
-im = Image.open('/Users/nafi/Develop/ML/yolo-output.jpg')
-width, height = im.size
+    pass
 
 cv2.destroyAllWindows()
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-img = mpimg.imread('/Users/nafi/Develop/ML/yolo-output.jpg')
+im = Image.open('/Users/nafi/Develop/GitHub/GSF/OpenCV/output.jpg')
+width, height = im.size
+
+img = mpimg.imread('/Users/nafi/Develop/GitHub/GSF/OpenCV/output.jpg')
 plt.imshow(img)
 
 plt.imshow(img)
-plt.xlim(width, 0)
+plt.xlim(0, width)
 plt.ylim(height, 0)
 plt.show()
