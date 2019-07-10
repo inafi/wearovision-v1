@@ -49,7 +49,7 @@ def run(img_path, acc, yolo):
     if yolo == 3:
         command = ["./runv3 detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights " + img_path]
     elif yolo == 9000:
-        command = ["./run9000 detector test cfg/combine9k.data cfg/yolo9000.cfg yolo9000.weights " + img_path]
+        command = ["./run9000 detector test cfg/combine9k.data cfg/yolo3-9000.cfg yolo9000.weights " + img_path]
     p = subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     text = p.stdout.read()
     classes = text.split("\n")
@@ -58,6 +58,7 @@ def run(img_path, acc, yolo):
         for i in range(len(classes)):
             outputs.append([classes[i].split(": ")[0], int(classes[i].split(": ")[1].strip("%"))])
         save = outputs
+        #Average the classes confidence so blank array doesn't get through
         outputs = filter_acc(outputs, acc)
         if outputs == [] and getavg(save) != -1:
             outputs = filter_acc(save, getavg(save))
@@ -67,6 +68,7 @@ def run(img_path, acc, yolo):
         return -1, -1, -1
 
 #Sorts through the final outputs of the runs of v3 and 9000 giving the truly final output
+#All the inputs are arrays
 def sort(v3, v9000, v9000c):
     sorted, d3, d9000 = ({} for i in range(3))
     d3o = 0
@@ -108,7 +110,7 @@ def show_img():
     path=os.path.join(cpath, "predictions.jpg")
     img=mpimg.imread(path)
     imgplot=plt.imshow(img)
-
+ 
     f2 = plt.figure(2)
     path2=os.path.join(cpath, "predictions.png")
     img2=mpimg.imread(path2)
@@ -119,6 +121,7 @@ def show_img():
 #Runs everything and assume jpg input - jpegs must be in /data
 def get_output(img):
     imgl = "data/" + img + ".jpg"
+    #Accuracy filters of v3 and 9000
     y3f, y3c, y3t = run(imgl, 80, 3)
     y9000f, y9000c, y9000t = run(imgl, 50, 9000)
     if y3f != -1:
@@ -131,4 +134,4 @@ def get_output(img):
         print("Unable to Classify")
 
 #Must be jpg 
-get_output("nb2")
+get_output("fruit2")
