@@ -1,26 +1,26 @@
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import os
 import cv2
 import numpy as np
-import os
-from PIL import Image
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 # 'path to input image/video'
-IMAGE = '/Users/nafi/Develop/GitHub/GSF/OpenCV/stuff3.jpg'
+IMAGE = '/Users/nafi/Develop/ML/OpenCV/stuff3.jpg'
 
 # 'path to yolo config file'
-CONFIG = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.cfg'
+# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.cfg
+CONFIG = '/Users/nafi/Develop/ML/OpenCV/yolov3.cfg'
 
 # 'path to text file containing class names'
-CLASSES = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.txt'
+# download https://github.com/arunponnusamy/object-detection-opencv/blob/master/yolov3.txt
+CLASSES = '/Users/nafi/Develop/ML/OpenCV/yolov3.txt'
 
 # 'path to yolo pre-trained weights'
-WEIGHTS = '/Users/nafi/Develop/GitHub/GSF/OpenCV/yolov3.weights'
+# wget https://pjreddie.com/media/files/yolov3.weights
+WEIGHTS = '/Users/nafi/Develop/ML/OpenCV/yolov3.weights'
 
-COLORS = '/Users/nafi/Develop/GitHub/GSF/OpenCV/colors.txt'
 
 # read class names from text file
-
 classes = None
 with open(CLASSES, 'r') as f:
     classes = [line.strip() for line in f.readlines()]
@@ -28,14 +28,6 @@ with open(CLASSES, 'r') as f:
 scale = 0.00392
 conf_threshold = 0.5
 nms_threshold = 0.4
-Width = 0
-Height = 0
-
-randrgb = []
-
-with open('colors.txt', 'r') as fin:
-    for i in range(sum(1 for line in open('colors.txt'))):
-        randrgb.append(fin.readline())
 
 # Print out labels
 
@@ -64,7 +56,6 @@ def get_output_layers(net):
 def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
     label = str(classes[class_id])
     color = COLORS[class_id]
-    print(color)
     cv2.rectangle(img, (x, y), (x_plus_w, y_plus_h), color, 7)
     cv2.putText(img, label, (x-10, y-10),
                 cv2.FONT_HERSHEY_SIMPLEX, 2.5, color, 2)
@@ -92,7 +83,7 @@ def processImage(image, index):
     class_ids = []
     confidences = []
     boxes = []
-    # for each detection from each output layer
+    # for each detetion from each output layer
     # get the confidence, class id, bounding box params
     # and ignore weak detections (confidence < 0.5)
     for out in outs:
@@ -128,8 +119,8 @@ def processImage(image, index):
             x), round(y), round(x+w), round(y+h))
 
     # display output image
-    out_image_name = "output"
-    #cv2.imshow(out_image_name, image)
+    out_image_name = "yolo-output"\
+        #cv2.imshow(out_image_name, image)
     # wait until any key is pressed
     # cv2.waitKey()
     # save output image to disk
@@ -147,17 +138,14 @@ try:
         processImage(frame, index)
         index = index + 1
 except:
-    pass
+    print()
 
+# release resources
 cv2.destroyAllWindows()
 
-im = Image.open('/Users/nafi/Develop/GitHub/GSF/OpenCV/output.jpg')
-width, height = im.size
-
-img = mpimg.imread('/Users/nafi/Develop/GitHub/GSF/OpenCV/output.jpg')
+img = mpimg.imread('/Users/nafi/Develop/ML/OpenCV/objects.jpg')
 plt.imshow(img)
-
 plt.imshow(img)
-plt.xlim(0, width)
-plt.ylim(height, 0)
+plt.xlim(600, 1100)
+plt.ylim(1000, 700)
 plt.show()
