@@ -64,7 +64,6 @@ def run(img_path, acc, yolo):
         final = get_l(outputs)
         return final, classes, text.split(" ")[3]
     else: 
-        print("Unable to classify")
         return -1, -1, -1
 
 #Sorts through the final outputs of the runs of v3 and 9000 giving the truly final output
@@ -108,22 +107,27 @@ def get_output(img):
     imgl = "data/" + img + ".jpg"
     y3f, y3c, y3t = run(imgl, 80, 3)
     y9000f, y9000c, y9000t = run(imgl, 50, 9000)
-    print(y9000t, "\n", y9000c, "\n", y9000f, "\n")
-    print(y3t, "\n", y3c, "\n", y3f, "\n")
-    s = sort(y3f, y9000f, y9000c)
-    print(s)
+    if y3f != -1:
+        print(y9000t, "\n", y9000c, "\n", y9000f, "\n")
+        print(y3t, "\n", y3c, "\n", y3f, "\n")
+        s = sort(y3f, y9000f, y9000c)
+        print(s)
+        show_img()
+    else:
+        print("Unable to Classify")
 
-#Must be jpg
-get_output("prof")
+#Must be jpg 
+get_output("inter")
 
-f1 = plt.figure(1)
-path=os.path.join(cpath, "predictions.jpg")
-img=mpimg.imread(path)
-imgplot=plt.imshow(img)
+def show_img():
+    f1 = plt.figure(1)
+    path=os.path.join(cpath, "predictions.jpg")
+    img=mpimg.imread(path)
+    imgplot=plt.imshow(img)
 
-f2 = plt.figure(2)
-path2=os.path.join(cpath, "predictions.png")
-img2=mpimg.imread(path2)
-imgplot=plt.imshow(img2)
+    f2 = plt.figure(2)
+    path2=os.path.join(cpath, "predictions.png")
+    img2=mpimg.imread(path2)
+    imgplot=plt.imshow(img2)
 
-plt.show()
+    plt.show()
