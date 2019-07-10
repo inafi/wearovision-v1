@@ -102,7 +102,21 @@ def sort(v3, v9000, v9000c):
         out.append([sorted[i], i])
     return out
 
-#Runs everything and assume jpg input
+#plt plots figures - 9000 is png and v3 is jpg
+def show_img():
+    f1 = plt.figure(1)
+    path=os.path.join(cpath, "predictions.jpg")
+    img=mpimg.imread(path)
+    imgplot=plt.imshow(img)
+
+    f2 = plt.figure(2)
+    path2=os.path.join(cpath, "predictions.png")
+    img2=mpimg.imread(path2)
+    imgplot=plt.imshow(img2)
+
+    plt.show()
+
+#Runs everything and assume jpg input - jpegs must be in /data
 def get_output(img):
     imgl = "data/" + img + ".jpg"
     y3f, y3c, y3t = run(imgl, 80, 3)
@@ -117,17 +131,4 @@ def get_output(img):
         print("Unable to Classify")
 
 #Must be jpg 
-get_output("inter")
-
-def show_img():
-    f1 = plt.figure(1)
-    path=os.path.join(cpath, "predictions.jpg")
-    img=mpimg.imread(path)
-    imgplot=plt.imshow(img)
-
-    f2 = plt.figure(2)
-    path2=os.path.join(cpath, "predictions.png")
-    img2=mpimg.imread(path2)
-    imgplot=plt.imshow(img2)
-
-    plt.show()
+get_output("nb2")
