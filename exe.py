@@ -115,7 +115,6 @@ def show_img():
     path2=os.path.join(cpath, "predictions.png")
     img2=mpimg.imread(path2)
     imgplot=plt.imshow(img2)
-
     plt.show()
 
 #Runs everything and assume jpg input - jpegs must be in /data
@@ -134,4 +133,4 @@ def get_output(img):
         print("Unable to Classify")
 
 #Must be jpg 
-get_output("fruit2")
+get_output("stuff2")
